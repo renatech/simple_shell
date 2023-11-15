@@ -1,94 +1,41 @@
 #include "shell.h"
-#include <stdio.h>
-#include <stdlib.h>
-
 /**
- * *create_history_t - Creates a history node
- *
- * @command: Input string
- *
- * @set_p_no: "Index" of the node
- *
- * Return: Pointer to new node
+ * history - Fill File By User Input
+ * @input: User Input
+ * Return: -1 Fail 0 Succes
  */
-
-history_t *create_history_t(char *command, int set_p_no)
+int history(char *input)
 {
-	int size = 0;
+	char *filename = ".simple_shell_history";
+	ssize_t fd, w;
+	int len = 0;
 
-	int i = 0;
-
-	char *input = NULL;
-
-	history_t *node = NULL;
-
-	size = _strlen(command);
-
-	input = malloc(sizeof(char) * size + 1);
-	if (!input)
-		return (NULL);
-
-	while (command[i])
+	if (!filename)
+		return (-1);
+	fd = open(filename, O_CREAT | O_RDWR | O_APPEND, 00600);
+	if (fd < 0)
+		return (-1);
+	if (input)
 	{
-		input[i] = command[i];
-		i++;
+		while (input[len])
+			len++;
+		w = write(fd, input, len);
+		if (w < 0)
+			return (-1);
 	}
-	input[i] = '\0';
-
-	node = malloc(sizeof(history_t));
-	if (!node)
-	{
-		free(input);
-		return (NULL);
-	}
-
-	node->command = input;
-	node->priority_number = set_p_no;
-	node->next = NULL;
-
-	return (node);
+	return (1);
 }
-
 /**
- * free_history_node - Frees node in history queue
- *
- * @node: Pointer to node
- *
- * Return: none
+ * free_env - Free Enviroment Variable Array
+ * @env:  Environment variables.
+ * Return: Void
  */
-
-void free_history_node(history_t *node)
+void free_env(char **env)
 {
-	if (!node)
-		return;
+	int i;
 
-	if (node->command)
-		free(node->command);
-	free(node);
-}
-
-/**
- * free_history_queue - Frees node in history queue
- *
- * @q: Pointer to queue
- *
- * Return: none
- */
-
-void free_history_queue(his_q_t *q)
-{
-	history_t *store = NULL, *temp = NULL;
-
-	if (!q)
-		return;
-	temp = q->front;
-	while (temp)
+	for (i = 0; env[i]; i++)
 	{
-		store = temp->next;
-		free_history_node(temp);
-		temp = store;
+		free(env[i]);
 	}
-
-	q->front = q->rear = NULL;
-	free(q);
 }

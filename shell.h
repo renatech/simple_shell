@@ -1,143 +1,112 @@
 #ifndef _SHELL_H_
 #define _SHELL_H_
-#include <unistd.h>
-/* delimeter macros */
-#define NORM_DELIMS " \t\a\r\n"
-#define PATH_DELIMS ":"
 
-/* external environmental variable array */
+/**###### environ var ######*/
+
 extern char **environ;
 
+/**##### MACROS ######*/
+
+#define BUFSIZE 1024
+#define DELIM " \t\r\n\a"
+#define PRINTER(c) (write(STDOUT_FILENO, c, _strlen(c)))
+
+/**###### LIBS USED ######*/
+
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <string.h>
+#include <sys/wait.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <linux/limits.h>
+
+
+
+
+
+/**###### STRING FUNCTION ######*/
+
+char *_strtok(char *str, const char *tok);
+unsigned int check_delim(char c, const char *str);
+char *_strncpy(char *dest, char *src, int n);
+int _strlen(char *s);
+int _putchar(char c);
+int _atoi(char *s);
+void _puts(char *str);
+int _strcmp(char *s1, char *s2);
+int _isalpha(int c);
+void array_rev(char *arr, int len);
+int intlen(int num);
+char *_itoa(unsigned int n);
+char *_strcat(char *dest, char *src);
+char *_strcpy(char *dest, char *src);
+char *_strchr(char *s, char c);
+int _strncmp(const char *s1, const char *s2, size_t n);
+char *_strdup(char *str);
+
+/**###### MEMORIE  MANGMENT ####*/
+
+void free_env(char **env);
+void *fill_an_array(void *a, int el, unsigned int len);
+char *_memcpy(char *dest, char *src, unsigned int n);
+void *_calloc(unsigned int size);
+void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size);
+void free_all(char **input, char *line);
+
+/**###### INPUT Function ######*/
+
+void prompt(void);
+void signal_to_handel(int sig);
+char *_getline(void);
+
+/** ###### Command parser and extractor ###*/
+
+int path_cmd(char **line);
+char *_getenv(char *name);
+char **parse_cmd(char *cmd);
+int handle_builtin(char **cmd, int er);
+void read_file(char *filename, char **argv);
+char *build(char *token, char *value);
+int check_builtin(char **cmd);
+void creat_envi(char **envi);
+int check_cmd(char **tokens, char *line, int count, char **argv);
+void treat_file(char *line, int counter, FILE *fd, char **argv);
+void exit_bul_for_file(char **cmd, char *line, FILE *fd);
+
+/** ####BUL FUNC #####*/
+
+void hashtag_handle(char *buff);
+int history(char *input);
+int history_dis(char **cmd, int er);
+int dis_env(char **cmd, int er);
+int change_dir(char **cmd, int er);
+int display_help(char **cmd, int er);
+int echo_bul(char **cmd, int er);
+void  exit_bul(char **cmd, char *input, char **argv, int c);
+int print_echo(char **cmd);
+
+/** ####error handle and Printer ####*/
+void print_number(unsigned int n);
+void print_number_in(int n);
+void print_error(char *line, int c, char **argv);
+void _prerror(char **argv, int c, char **cmd);
+
+
 /**
- * struct command_s - Structure of each node
- *
- * @prev_valid: Check if previous command
- * was successful
- *
- * @separator: Used for character that
- * that separates each command
- *
- * @command: Points to the first char
- * in the stream
- *
- * @next: Address of next node
- *
- */
-typedef struct command_s
-{
-	int prev_valid;
-
-	char separator;
-	char **command;
-	struct command_s *next;
-} command_t;
-
-/**
- * struct queue_s - Structure of queue
- *
- * @front: Pointer to the first node
- *
- * @rear: Pointer to the front+1 node
- *
+ * struct bulltin - contain bultin to handle and function to excute
+ * @command:pointer to char
+ * @fun:fun to excute when bultin true
  */
 
-typedef struct queue_s
-{
-	command_t *front, *rear;
-} queue_t;
-
-/**
- * struct history_s - Structure of history queue
- *
- * @command: Holds the command from getline()
- *
- * @priority_number: Holds the number coorelated
- * to the command input order
- *
- * @next: Pointer to the next node
- *
- */
-
-typedef struct history_s
+typedef struct  bulltin
 {
 	char *command;
+	int (*fun)(char **line, int er);
+} bul_t;
 
-	int priority_number;
-	struct history_s *next;
-} history_t;
-
-/**
- * struct his_q_s - Structure of queue
- *
- * @front: Pointer to the first node
- *
- * @rear: Pointer to the front+1 node
- *
- */
-
-typedef struct his_q_s
-{
-	history_t *front, *rear;
-} his_q_t;
-
-/* main functionality */
-int start_shell(char **environ, char *exec_name);
-queue_t *parse_string(char *input_str);
-int execute_commands(his_q_t *his_q, queue_t *command_q,
-			char *envp[], char *exec_name);
-char *get_file_path(char *filename, char *envp[]);
-
-/* free memory */
-void free_token_list(char **tokens);
-void free_command_queue(queue_t *command_q);
-void free_command(command_t *command);
-
-/* build the queue of commands */
-command_t *create_command(char separator, char **command);
-char **strtow(char *str, char *delims);
-int is_delim(char ch, char *delims);
-queue_t *create_queue();
-
-/* using our queue */
-int enqueue(queue_t *q, char separator, char **command);
-command_t *dequeue(queue_t *q);
-void print_queue(queue_t *q);
-
-/* history queue */
-history_t *create_history_t(char *command, int set_p_no);
-void free_history_node(history_t *node);
-void free_history_queue(his_q_t *q);
-
-/* history enqueue/dequeue */
-his_q_t *get_history();
-his_q_t *create_h_queue();
-int h_enqueue(his_q_t *q, char *command);
-history_t *h_dequeue(his_q_t *q);
-void write_h_queue(his_q_t *q, int fd);
-
-/* writing/loading history file */
-void write_queue_to_file(his_q_t *q, char **env);
-
-/* custom functions for custom commands */
-void exit_shell(his_q_t *his_q, queue_t *q, int status, char **env);
-int print_env(char *envp[]);
-
-/* handling signals */
-void signal_handler(int sig_no);
-int register_signal_handlers(void);
-
-/* custom stdlib */
-int _atoi(char *str);
-int _strlen(char *str);
-char *get_int(int num);
-char *_getenv(char *env_name, char **environ);
-char *combine_path(char *dir, char *file);
-
-/* print errors */
-void print_no_file_error(char *executable_name);
-void print_perm_denied(char *executable_name);
-void print_signal_reg_error(void);
-void print_prompt(void);
-void print_newline(void);
-
-#endif /* _SHELL_H_ */
+#endif
